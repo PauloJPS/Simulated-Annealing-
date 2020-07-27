@@ -6,14 +6,14 @@ from numba import jit, njit, prange
 @njit
 def distance(p1, p2):
     """
-        Calculate the distance between two points, p1 and p2, using numpy.
+        This function calculates the distance between two points, p1 and p2, using numpy.
     """
     return np.sqrt(np.sum(np.power(p1 - p2, 2)))
 
 @njit
 def setCities(n, area=(1,1)):
     """
-        This Function distribute points uniformly in a square space
+        This Function distributes points uniformly in a square space
     """
     pos = np.random.rand(n, 2)
     pos[:,0] *= area[0]
@@ -23,7 +23,7 @@ def setCities(n, area=(1,1)):
 @njit
 def setCitiesCirc(n, area=(1,1)):
     """
-        Puts points in a circular grid
+        This function puts points into a circular grid
     """
     rand = np.random.choice(np.arange(0, n), n, replace=False)
     arange = np.arange(n)
@@ -35,7 +35,7 @@ def setCitiesCirc(n, area=(1,1)):
 @njit
 def getInitialState(n, grid='random'):
     """
-        For a given points distribution this function find a random initial system state
+        For a given points distribution this function finds a random initial system state
     """
     s = np.random.choice(np.arange(n), n, replace=False)
     if grid == 'random':
@@ -47,7 +47,7 @@ def getInitialState(n, grid='random'):
 @njit
 def Hamiltonian(pos):
     """
-        Calculate the system energy
+        This function calculates the system energy
     """
     f = 0
     l = len(pos) - 1
@@ -59,7 +59,7 @@ def Hamiltonian(pos):
 @jit
 def permutate(s, nCities, nPermutations=2):   
     """
-        Perform n permutations in the traveler trajectory 
+        This function performs n permutations in the traveler trajectory 
     """
     if nPermutations % 2 != 0:
         raise ValueError('nPermutations mus be pair')
@@ -77,7 +77,7 @@ def permutate(s, nCities, nPermutations=2):
 @jit
 def newState(s, pos, nCities, T, nPermutations):
     """
-        Try a new system trajectory 
+        This function tries a new system trajectory 
     """
     s0, s = permutate(s, nCities, nPermutations)
     e0 = Hamiltonian(pos[s0])
@@ -92,23 +92,22 @@ def newState(s, pos, nCities, T, nPermutations):
         else: return s0, e0
 
 @jit
-def simulate(nCities, nPermutations, Ti, DeltaT, steps, grid):
+def simulate(nCities, nPermutations, Ti, DeltaT, steps, grid, stepsCooling):
     """
-        Performs the Metropolis algorithm
+        This function performs the Metropolis algorithm and a simple cooling schedule 
     """
     s, pos = getInitialState(nCities, grid)
     s0 = s.copy()
     e = Hamiltonian(pos)
     eList = np.zeros(steps)
     smallest = np.array([e, s])
-    acc = 0
     for t in prange(steps):
         e0 = e
         s, e = newState(s=s, pos=pos, nCities=nCities, T=Ti, nPermutations=nPermutations)
         if e < smallest[0]: 
             smallest[0] = e
             smallest[1] = s.copy()
-        if t % 10000 == 0: Ti *= DeltaT
+        if t % stepsCooling == 0: Ti *= DeltaT
         if t % 1000 == 0: print(t, Ti, e)
         eList[t] = e
     return eList, smallest, s0, pos#, sList, posList 
@@ -116,8 +115,8 @@ def simulate(nCities, nPermutations, Ti, DeltaT, steps, grid):
 
 def findAllStates(nCities, s, pos):
     """
-        Finds all possible trajectories for a given cities distribution 
-        Pls, do not use large values of cities. I recommend a maximum of ten 
+        This function finds all possible trajectories for a given cities distribution 
+        Please, do not use large values of cities. I recommend a maximum of ten 
 
     """
     states = list(itertools.permutations(s[1:]))
